@@ -8,5 +8,4 @@ FLINK_VERSION=$FLINK_VERSION
 [[ -z $DOCKER_REGISTRY_HOST ]] && echo "DOCKER_REGISTRY_HOST is not set" && exit 1
 [[ -z $FLINK_VERSION ]] && echo "FLINK_VERSION is not set" && exit 1
 
-# supported platforms: linux/amd64,linux/arm64
-docker build --platform linux/amd64,linux/arm64 --tag $DOCKER_REGISTRY_HOST/flink:$FLINK_VERSION .
+crane flatten $DOCKER_REGISTRY_HOST/flink:$FLINK_VERSION -v
