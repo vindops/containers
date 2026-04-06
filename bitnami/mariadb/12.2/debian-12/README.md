@@ -8,13 +8,13 @@ export DOCKER_REGISTRY_HOST=<YOUR_DOCKER_REGISTRY_HOST>
 # example: export DOCKER_REGISTRY_HOST=ghcr.io/vindops
 
 ./bin/build.sh <YOUR_MARIADB_VERSION>
-# example: ./bin/build.sh 12.2.2
+# example: ./bin/build.sh ghcr.io/vindops/mariadb:12.2.2
 
 # Check CVEs
 ./bin/cve.sh <YOUR_MARIADB_VERSION>
-# example: ./bin/cve.sh 12.2.2
+# example: ./bin/cve.sh ghcr.io/vindops/mariadb:12.2.2
 
 # Flatten image
 ./bin/crane.sh <YOUR_MARIADB_VERSION>
-# example: ./bin/crane.sh 12.2.2
+# example: ./bin/crane.sh ghcr.io/vindops/mariadb:12.2.2
 ```
