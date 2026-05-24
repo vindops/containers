@@ -217,3 +217,4 @@ export WP_CLI_DAEMON_USER="daemon"
 export WP_CLI_DAEMON_GROUP="daemon"
 
 # Custom environment variables may be defined below
+export WORDPRESS_ENABLE_DEV_MODE=${WORDPRESS_ENABLE_DEV_MODE:-no}

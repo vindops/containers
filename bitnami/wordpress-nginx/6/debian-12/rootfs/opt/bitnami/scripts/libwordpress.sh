@@ -231,7 +231,24 @@ wordpress_initialize() {
 
     # Check if WordPress has already been initialized and persisted in a previous run
     local -r app_name="wordpress"
-    if ! is_app_initialized "$app_name" || [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+    if is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE" || ! is_app_initialized "$app_name" || [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+        if is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
+            if is_app_initialized "$app_name"; then
+                debug "is_wordpress_initialized: true"
+            else
+                debug "is_wordpress_initialized: false"
+            fi
+
+            if [[ -f "$WORDPRESS_CONF_FILE" ]]; then
+                debug "$WORDPRESS_CONF_FILE is existed"
+            else
+                debug "$WORDPRESS_CONF_FILE is not existed"
+            fi
+
+            debug "Checking content in ${WORDPRESS_BASE_DIR}"
+            ls -l "${WORDPRESS_BASE_DIR}"
+        fi
+
         # Ensure WordPress persisted directories exist (i.e. when a volume has been mounted to /bitnami)
         info "Ensuring WordPress directories exist"
         ensure_dir_exists "$WORDPRESS_VOLUME_DIR"
