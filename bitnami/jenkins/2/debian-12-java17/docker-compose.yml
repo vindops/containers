@@ -1,0 +1,18 @@
+# Copyright Broadcom, Inc. All Rights Reserved.
+# SPDX-License-Identifier: APACHE-2.0
+
+name: jenkins
+
+volumes:
+  data:
+
+services:
+  jenkins:
+    image: ghcr.io/vindops/jenkins:2.504.2-debian-12-java17-r0-unflattened.0
+    ports:
+      - 80:8080
+    environment:
+      - JENKINS_PASSWORD=bitnami
+      - BITNAMI_DEBUG=true
+    volumes:
+      - data:/bitnami/jenkins
