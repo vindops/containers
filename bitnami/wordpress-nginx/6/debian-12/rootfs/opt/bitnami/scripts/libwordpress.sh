@@ -374,17 +374,21 @@ wordpress_initialize() {
             wp_execute core update-db
         fi
 
-        info "Persisting WordPress installation"
-        persist_app "$app_name" "$WORDPRESS_DATA_TO_PERSIST"
+        if ! is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
+            info "Persisting WordPress installation"
+            persist_app "$app_name" "$WORDPRESS_DATA_TO_PERSIST"
+        fi
 
-        # Secure wp-config.php file after persisting data because then we can ensure the commands to work
-        # when running the scripts as non-root users
-        local wp_config_path
-        wp_config_path="$(readlink -f "$WORDPRESS_CONF_FILE")"
-        if am_i_root; then
-            is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440" -u "$WEB_SERVER_DAEMON_USER" -g "root"
-        else
-            is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440"
+        if ! is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
+            # Secure wp-config.php file after persisting data because then we can ensure the commands to work
+            # when running the scripts as non-root users
+            local wp_config_path
+            wp_config_path="$(readlink -f "$WORDPRESS_CONF_FILE")"
+            if am_i_root; then
+                is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440" -u "$WEB_SERVER_DAEMON_USER" -g "root"
+            else
+                is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440"
+            fi
         fi
     else
         info "Restoring persisted WordPress installation"
