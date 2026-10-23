@@ -5,15 +5,20 @@ FROM docker.io/bitnami/minideb:bookworm
 
 ARG DOWNLOADS_URL="downloads.bitnami.com/files/stacksmith"
 ARG TARGETARCH
+ARG WORDPRESS_VERSION="6.9.10"
+# Published at https://wordpress.org/wordpress-6.9.10.tar.gz.sha1
+ARG WORDPRESS_TARBALL_SHA1="a68c82de3042bf095d6ecf9001aa06447b86232f"
+ARG WP_CLI_VERSION="2.12.0"
+ARG WP_CLI_PHAR_SHA256="ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c"
 
 LABEL org.opencontainers.image.base.name="docker.io/bitnami/minideb:bookworm" \
-      org.opencontainers.image.created="2026-07-15T14:59:52Z" \
+      org.opencontainers.image.created="2026-10-22T14:11:00Z" \
       org.opencontainers.image.description="Application packaged by Broadcom, Inc." \
       org.opencontainers.image.documentation="https://github.com/bitnami/containers/tree/main/bitnami/wordpress-nginx/README.md" \
       org.opencontainers.image.source="https://github.com/bitnami/containers/tree/main/bitnami/wordpress-nginx" \
       org.opencontainers.image.title="wordpress-nginx" \
       org.opencontainers.image.vendor="Broadcom, Inc." \
-      org.opencontainers.image.version="6.9.4"
+      org.opencontainers.image.version="6.9.10"
 
 ENV HOME="/" \
     OS_ARCH="${TARGETARCH:-amd64}" \
@@ -23,17 +28,16 @@ ENV HOME="/" \
 COPY prebuildfs /
 SHELL ["/bin/bash", "-o", "errexit", "-o", "nounset", "-o", "pipefail", "-c"]
 # Install required system packages and dependencies
-RUN install_packages acl ca-certificates curl gettext less libaudit1 libbrotli1 libbsd0 libbz2-1.0 libcap-ng0 libcom-err2 libcrypt1 libcurl4 libexpat1 libffi8 libfftw3-double3 libfontconfig1 libfreetype6 libgcc-s1 libgcrypt20 libgeoip1 libglib2.0-0 libgmp10 libgnutls30 libgomp1 libgpg-error0 libgssapi-krb5-2 libhashkit2 libhogweed6 libicu72 libidn2-0 libjpeg62-turbo libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblcms2-2 libldap-2.5-0 liblqr-1-0 libltdl7 liblzma5 libmagickcore-6.q16-6 libmagickwand-6.q16-6 libmd0 libmemcached11 libncurses6 libnettle8 libnghttp2-14 libonig5 libp11-kit0 libpam0g libpcre2-8-0 libpcre3 libpng16-16 libpsl5 libreadline8 librtmp1 libsasl2-2 libsodium23 libsqlite3-0 libssh2-1 libssl3 libstdc++6 libsybdb5 libtasn1-6 libtidy5deb1 libtinfo6 libunistring2 libuuid1 libwebp7 libx11-6 libxau6 libxcb1 libxdmcp6 libxext6 libxml2 libxslt1.1 libzip4 libzstd1 openssl procps zlib1g
+RUN install_packages acl ca-certificates curl gettext less libatomic1 libaudit1 libbrotli1 libbsd0 libbz2-1.0 libcap-ng0 libcom-err2 libcrypt1 libcurl4 libexpat1 libffi8 libfftw3-double3 libfontconfig1 libfreetype6 libgcc-s1 libgcrypt20 libgeoip1 libglib2.0-0 libgmp10 libgnutls30 libgomp1 libgpg-error0 libgssapi-krb5-2 libhashkit2 libhogweed6 libicu72 libidn2-0 libjpeg62-turbo libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblcms2-2 libldap-2.5-0 liblqr-1-0 libltdl7 liblzma5 libmagickcore-6.q16-6 libmagickwand-6.q16-6 libmd0 libmemcached11 libncurses6 libnettle8 libnghttp2-14 libonig5 libp11-kit0 libpam0g libpcre2-8-0 libpcre3 libpng16-16 libpsl5 libreadline8 librtmp1 libsasl2-2 libsodium23 libsqlite3-0 libssh2-1 libssl3 libstdc++6 libsybdb5 libtasn1-6 libtidy5deb1 libtinfo6 libunistring2 libuuid1 libwebp7 libx11-6 libxau6 libxcb1 libxdmcp6 libxext6 libxml2 libxslt1.1 libzip4 libzstd1 openssl procps zlib1g
 RUN --mount=type=secret,id=downloads_url,env=SECRET_DOWNLOADS_URL \
     DOWNLOADS_URL=${SECRET_DOWNLOADS_URL:-${DOWNLOADS_URL}} ; \
     mkdir -p /tmp/bitnami/pkg/cache/ ; cd /tmp/bitnami/pkg/cache/ || exit 1 ; \
     COMPONENTS=( \
-      "render-template-1.0.9-168-linux-${OS_ARCH}-debian-12" \
-      "php-8.4.23-0-linux-${OS_ARCH}-debian-12" \
-      "nginx-1.31.2-0-linux-${OS_ARCH}-debian-12" \
-      "mysql-client-12.3.2-1-linux-${OS_ARCH}-debian-12" \
-      "postgresql-lib-18.4.0-0-linux-${OS_ARCH}-debian-12" \
-      "wordpress-nginx-6.9.4-0-linux-${OS_ARCH}-debian-12" \
+      "render-template-1.0.10-6-linux-${OS_ARCH}-debian-12" \
+      "php-8.4.27-1-linux-${OS_ARCH}-debian-12" \
+      "nginx-1.31.7-0-linux-${OS_ARCH}-debian-12" \
+      "mysql-client-13.1.1-0-linux-${OS_ARCH}-debian-12" \
+      "postgresql-lib-18.6.0-0-linux-${OS_ARCH}-debian-12" \
     ) ; \
     for COMPONENT in "${COMPONENTS[@]}"; do \
       if [ ! -f "${COMPONENT}.tar.gz" ]; then \
@@ -44,6 +48,16 @@ RUN --mount=type=secret,id=downloads_url,env=SECRET_DOWNLOADS_URL \
       tar -zxf "${COMPONENT}.tar.gz" -C /opt/bitnami --strip-components=2 --no-same-owner ; \
       rm -rf "${COMPONENT}".tar.gz{,.sha256} ; \
     done
+RUN curl -fsSL -o /tmp/wordpress.tar.gz "https://wordpress.org/wordpress-${WORDPRESS_VERSION}.tar.gz" ; \
+    echo "${WORDPRESS_TARBALL_SHA1}  /tmp/wordpress.tar.gz" | sha1sum -c - ; \
+    rm -rf /opt/bitnami/wordpress ; \
+    mkdir -p /opt/bitnami/wordpress ; \
+    tar -zxf /tmp/wordpress.tar.gz -C /opt/bitnami/wordpress --strip-components=1 --no-same-owner ; \
+    rm -f /tmp/wordpress.tar.gz
+RUN mkdir -p /opt/bitnami/wp-cli/bin ; \
+    curl -fsSL -o /opt/bitnami/wp-cli/bin/wp-cli.phar "https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar" ; \
+    echo "${WP_CLI_PHAR_SHA256}  /opt/bitnami/wp-cli/bin/wp-cli.phar" | sha256sum -c - ; \
+    chmod 755 /opt/bitnami/wp-cli/bin/wp-cli.phar
 RUN apt-get update && apt-get upgrade -y && \
     apt-get clean && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 RUN chmod g+rwX /opt/bitnami
@@ -56,9 +70,9 @@ RUN /opt/bitnami/scripts/nginx/postunpack.sh
 RUN /opt/bitnami/scripts/php/postunpack.sh
 RUN /opt/bitnami/scripts/nginx-php-fpm/postunpack.sh
 RUN /opt/bitnami/scripts/wordpress/postunpack.sh
-ENV APP_VERSION="6.9.4" \
+ENV APP_VERSION="6.9.10" \
     BITNAMI_APP_NAME="wordpress-nginx" \
-    IMAGE_REVISION="12" \
+    IMAGE_REVISION="1" \
     LD_LIBRARY_PATH="/opt/bitnami/postgresql/lib" \
     NGINX_HTTPS_PORT_NUMBER="" \
     NGINX_HTTP_PORT_NUMBER="" \

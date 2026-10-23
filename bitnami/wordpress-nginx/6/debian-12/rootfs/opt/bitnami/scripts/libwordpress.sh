@@ -231,7 +231,10 @@ wordpress_initialize() {
 
     # Check if WordPress has already been initialized and persisted in a previous run
     local -r app_name="wordpress"
-    if is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE" || ! is_app_initialized "$app_name" || [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+    local -r persisted_wordpress_conf_file="${WORDPRESS_VOLUME_DIR}/wp-config.php"
+    # A non-empty volume may be incomplete: development volumes can contain
+    # wp-content but lack wp-config.php. Do not restore a dangling symlink.
+    if ! is_app_initialized "$app_name" || [[ ! -f "$persisted_wordpress_conf_file" ]]; then
         if is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
             if is_app_initialized "$app_name"; then
                 debug "is_wordpress_initialized: true"
@@ -254,6 +257,17 @@ wordpress_initialize() {
         ensure_dir_exists "$WORDPRESS_VOLUME_DIR"
         # Use daemon:root ownership for compatibility when running as a non-root user
         am_i_root && configure_permissions_ownership "$WORDPRESS_VOLUME_DIR" -d "775" -f "664" -u "$WEB_SERVER_DAEMON_USER" -g "root"
+
+        # A previous restore against a partial volume can leave wp-config.php as
+        # a dangling symlink. Seed the persisted target before applying env vars.
+        if [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+            local wordpress_conf_target="$WORDPRESS_CONF_FILE"
+            [[ -L "$WORDPRESS_CONF_FILE" ]] && wordpress_conf_target="$(readlink -m "$WORDPRESS_CONF_FILE")"
+            info "Restoring missing WordPress configuration file"
+            ensure_dir_exists "$(dirname "$wordpress_conf_target")"
+            cp "${WORDPRESS_BASE_DIR}/wp-config-sample.php" "$wordpress_conf_target"
+        fi
+
         info "Trying to connect to the database server"
         wordpress_wait_for_mysql_connection "$WORDPRESS_DATABASE_HOST" "$WORDPRESS_DATABASE_PORT_NUMBER" "$WORDPRESS_DATABASE_NAME" "$WORDPRESS_DATABASE_USER" "$WORDPRESS_DATABASE_PASSWORD"
 
@@ -374,21 +388,17 @@ wordpress_initialize() {
             wp_execute core update-db
         fi
 
-        if ! is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
-            info "Persisting WordPress installation"
-            persist_app "$app_name" "$WORDPRESS_DATA_TO_PERSIST"
-        fi
+        info "Persisting WordPress installation"
+        persist_app "$app_name" "$WORDPRESS_DATA_TO_PERSIST"
 
-        if ! is_boolean_yes "$WORDPRESS_ENABLE_DEV_MODE"; then
-            # Secure wp-config.php file after persisting data because then we can ensure the commands to work
-            # when running the scripts as non-root users
-            local wp_config_path
-            wp_config_path="$(readlink -f "$WORDPRESS_CONF_FILE")"
-            if am_i_root; then
-                is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440" -u "$WEB_SERVER_DAEMON_USER" -g "root"
-            else
-                is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440"
-            fi
+        # Secure wp-config.php file after persisting data because then we can ensure the commands to work
+        # when running the scripts as non-root users
+        local wp_config_path
+        wp_config_path="$(readlink -f "$WORDPRESS_CONF_FILE")"
+        if am_i_root; then
+            is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440" -u "$WEB_SERVER_DAEMON_USER" -g "root"
+        else
+            is_file_writable "$wp_config_path" && configure_permissions_ownership "$wp_config_path" -f "440"
         fi
     else
         info "Restoring persisted WordPress installation"
