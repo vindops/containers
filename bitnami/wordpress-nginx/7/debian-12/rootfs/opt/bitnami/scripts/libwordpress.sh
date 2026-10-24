@@ -235,12 +235,22 @@ wordpress_initialize() {
 
     # Check if WordPress has already been initialized and persisted in a previous run
     local -r app_name="wordpress"
-    if ! is_app_initialized "$app_name" || [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+    local -r persisted_wordpress_conf_file="${WORDPRESS_VOLUME_DIR}/wp-config.php"
+    if ! is_app_initialized "$app_name" || [[ ! -f "$persisted_wordpress_conf_file" ]]; then
         # Ensure WordPress persisted directories exist (i.e. when a volume has been mounted to /bitnami)
         info "Ensuring WordPress directories exist"
         ensure_dir_exists "$WORDPRESS_VOLUME_DIR"
         # Use daemon:root ownership for compatibility when running as a non-root user
         am_i_root && configure_permissions_ownership "$WORDPRESS_VOLUME_DIR" -d "775" -f "664" -u "$WEB_SERVER_DAEMON_USER" -g "root" -n
+
+        if [[ ! -f "$WORDPRESS_CONF_FILE" ]]; then
+            local wordpress_conf_target="$WORDPRESS_CONF_FILE"
+            [[ -L "$WORDPRESS_CONF_FILE" ]] && wordpress_conf_target="$(readlink -m "$WORDPRESS_CONF_FILE")"
+            info "Restoring missing WordPress configuration file"
+            ensure_dir_exists "$(dirname "$wordpress_conf_target")"
+            cp "${WORDPRESS_BASE_DIR}/wp-config-sample.php" "$wordpress_conf_target"
+        fi
+
         info "Trying to connect to the database server"
         wordpress_wait_for_mysql_connection "$WORDPRESS_DATABASE_HOST" "$WORDPRESS_DATABASE_PORT_NUMBER" "$WORDPRESS_DATABASE_NAME" "$WORDPRESS_DATABASE_USER" "$WORDPRESS_DATABASE_PASSWORD"
 
